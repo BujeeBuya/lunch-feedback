@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Хосын хоолны дэвтэр</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#fff;--bg2:#f5f5f4;--bg3:#eeece8;
+      --text:#1c1c1b;--text2:#6b6b68;--text3:#a8a8a4;
+      --border:rgba(0,0,0,.12);--border2:rgba(0,0,0,.22);
+      --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#085041;
+      --purple:#7F77DD;--purple-bg:#EEEDFE;--purple-text:#26215C;
+      --amber:#EF9F27;--r-md:8px;--r-lg:12px;
+    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1c1c1b;--bg2:#262625;--text:#f0ede8;--text2:#9a9994;--text3:#5c5c59;
+      --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.2);
+      --green-bg:#0a3326;--green-text:#9FE1CB;--purple-bg:#1e1b3a;--purple-text:#AFA9EC;
+    }}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .app{max-width:680px;margin:0 auto;padding:0 16px 60px}
+    /* loading */
+    .overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:99}
+    .overlay p{font-size:14px;color:var(--text2)}
+    .spin-big{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+    /* header */
+    .header{padding:24px 0 16px;border-bottom:.5px solid var(--border);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+    .header h1{font-size:20px;font-weight:500}
+    .header p{font-size:13px;color:var(--text2);margin-top:2px}
+    .sync-badge{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);white-space:nowrap}
+    .sdot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .4s}
+    .sdot.on{background:var(--green)}
+    /* tabs */
+    .tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:20px}
+    .tab{padding:8px 16px;font-size:14px;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-.5px;font-family:inherit;transition:color .15s}
+    .tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+    /* form */
+    .sec{margin-bottom:18px}
+    .sec-label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .csl{font-size:11px;color:var(--text3);margin:8px 0 5px;font-weight:500}
+    /* stars */
+    .stars{display:flex;gap:4px}
+    .star{font-size:28px;cursor:pointer;opacity:.2;transition:opacity .1s,transform .1s;line-height:1;user-select:none}
+    .star.lit{opacity:1}.star:hover{transform:scale(1.1)}
+    .star-me{color:var(--green)}.star-bf{color:var(--purple)}
+    .mini-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px}
+    .mini-card{background:var(--bg2);border-radius:var(--r-md);padding:9px 10px}
+    .mini-lbl{font-size:12px;color:var(--text2);margin-bottom:5px}
+    .mini-stars{display:flex;gap:2px}
+    .mini-star{font-size:18px;cursor:pointer;opacity:.2;transition:opacity .1s;line-height:1;user-select:none}
+    .mini-star.lit{opacity:1}
+    /* chips */
+    .chip-group{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+    .chip{padding:5px 11px;border:.5px solid var(--border2);border-radius:100px;font-size:12px;cursor:pointer;color:var(--text2);background:var(--bg);font-family:inherit;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+    .chip:hover{background:var(--bg2)}
+    .chip.sel-me{background:var(--green-bg);color:var(--green-text);border-color:var(--green);font-weight:500}
+    .chip.sel-bf{background:var(--purple-bg);color:var(--purple-text);border-color:var(--purple);font-weight:500}
+    .chip .dx{font-size:14px;line-height:1;opacity:.4;cursor:pointer;margin-left:2px}.chip .dx:hover{opacity:1}
+    .add-chip-btn{padding:4px 10px;border:.5px dashed var(--border2);border-radius:100px;font-size:12px;cursor:pointer;color:var(--text3);background:transparent;font-family:inherit;transition:all .15s;white-space:nowrap}
+    .add-chip-btn:hover{border-color:var(--text2);color:var(--text2);background:var(--bg2)}
+    .chip-add-row{display:flex;gap:6px;margin-top:6px;align-items:center}
+    .chip-add-row input{flex:1;border:.5px solid var(--border2);border-radius:100px;padding:4px 12px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+    .chip-add-row input:focus{border-color:var(--text2)}
+    .chip-add-row button{padding:4px 12px;border:none;border-radius:100px;font-size:12px;cursor:pointer;font-family:inherit;background:var(--text2);color:var(--bg)}
+    .chip-add-row .cx{background:transparent;color:var(--text3);border:.5px solid var(--border)}
+    /* work */
+    .work-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border-radius:var(--r-md);padding:10px 12px;margin-bottom:18px}
+    .work-lbl{font-size:12px;color:var(--text2);white-space:nowrap}
+    .work-row input[type=range]{flex:1}
+    .work-val{font-size:13px;font-weight:500;color:var(--text);min-width:80px;text-align:right}
+    /* user pick */
+    .user-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+    .user-btn{padding:12px;border:.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;background:var(--bg);font-family:inherit;transition:all .15s;text-align:center}
+    .user-btn:hover{background:var(--bg2)}
+    .user-btn.sel-me{border-color:var(--green);border-width:2px;background:var(--green-bg)}
+    .user-btn.sel-bf{border-color:var(--purple);border-width:2px;background:var(--purple-bg)}
+    .u-icon{font-size:22px;margin-bottom:3px}.u-name{font-size:14px;font-weight:500;color:var(--text)}
+    /* inputs */
+    textarea{width:100%;border:.5px solid var(--border);border-radius:var(--r-md);padding:9px 11px;font-size:14px;font-family:inherit;color:var(--text);background:var(--bg);resize:vertical;min-height:70px}
+    textarea:focus{outline:none;border-color:var(--border2)}
+    textarea::placeholder{color:var(--text3)}
+    input[type=text]{width:100%;border:.5px solid var(--border);border-radius:var(--r-md);padding:8px 11px;font-size:14px;font-family:inherit;color:var(--text);background:var(--bg)}
+    input[type=text]:focus{outline:none;border-color:var(--border2)}
+    /* buttons */
+    .btn{border:none;border-radius:var(--r-md);padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .15s;width:100%}
+    .btn-me{background:var(--green);color:#fff}.btn-bf{background:var(--purple);color:#fff}
+    .btn:hover{opacity:.88}.btn:disabled{opacity:.4;cursor:not-allowed}
+    .btn-out{background:transparent;color:var(--text);border:.5px solid var(--border2);border-radius:var(--r-md);padding:10px 20px;font-size:14px;cursor:pointer;font-family:inherit;transition:background .15s;width:100%}
+    .btn-out:hover{background:var(--bg2)}.btn-out:disabled{opacity:.4;cursor:not-allowed}
+    /* ai boxes */
+    .ai-box{border-radius:var(--r-lg);border:.5px solid var(--border);padding:16px 20px;margin-top:16px}
+    .ai-box-me{background:var(--green-bg)}.ai-box-bf{background:var(--purple-bg)}.ai-box-n{background:var(--bg2)}
+    .ai-hdr{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+    .dot-me{background:var(--green)}.dot-bf{background:var(--purple)}.dot-g{background:var(--amber)}
+    .ai-txt{font-size:14px;color:var(--text);line-height:1.65;white-space:pre-wrap}
+    /* alert */
+    .alert{padding:9px 13px;border-radius:var(--r-md);font-size:13px;margin-top:8px}
+    .ok{background:#E1F5EE;color:#085041}.err-a{background:#FCEBEB;color:#501313}
+    /* spinner */
+    .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* history */
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+    .stat-card{background:var(--bg2);border-radius:var(--r-md);padding:10px;text-align:center}
+    .stat-val{font-size:22px;font-weight:500}.stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
+    .h-item{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:10px}
+    .h-meal{font-size:15px;font-weight:500;margin-bottom:3px}
+    .h-date{font-size:11px;color:var(--text2);margin-bottom:8px}
+    .h-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .h-col{background:var(--bg2);border-radius:var(--r-md);padding:8px 10px}
+    .h-col-hdr{font-size:11px;font-weight:500;margin-bottom:4px}
+    .h-col-hdr-me{color:var(--green-text)}.h-col-hdr-bf{color:var(--purple-text)}
+    .h-score-me{color:var(--green);font-size:15px}.h-score-bf{color:var(--purple);font-size:15px}
+    .h-sub{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5}
+    .h-comment{font-size:12px;color:var(--text2);margin-top:4px;font-style:italic}
+    .h-chips{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+    .hc-me{font-size:10px;padding:1px 7px;background:var(--green-bg);color:var(--green-text);border-radius:100px}
+    .hc-bf{font-size:10px;padding:1px 7px;background:var(--purple-bg);color:var(--purple-text);border-radius:100px}
+    /* misc */
+    .name-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+    .name-badge{font-size:11px;font-weight:500;margin-bottom:4px}
+    .badge-me{color:var(--green-text)}.badge-bf{color:var(--purple-text)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="loading">
+  <div class="spin-big"></div>
+  <p>Firebase холбогдож байна...</p>
+</div>
+
+<div class="app hidden" id="main-app">
+  <div class="header">
+    <div style="font-size:30px">💑</div>
+    <div>
+      <h1>Хосын хоолны дэвтэр</h1>
+      <p>Хоёулаа үнэлж, Gemini-ийн зөвлөгөөгөөр дараагийн хоолоо сонго</p>
+    </div>
+    <div class="sync-badge">
+      <div class="sdot" id="sdot"></div>
+      <span id="slbl">...</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('add')">Хоол нэмэх</button>
+    <button class="tab" onclick="showTab('history')">Дэвтэр</button>
+    <button class="tab" onclick="showTab('decide')">Дараагийн хоол ↗</button>
+  </div>
+
+  <!-- ADD TAB -->
+  <div id="tab-add">
+
+    <div class="sec">
+      <div class="sec-label">Хоолны нэр</div>
+      <input type="text" id="meal-name" placeholder="Жишээ: Бууз, Хуурсан гурил, Гуляш..."/>
+    </div>
+
+    <div class="user-pick">
+      <button class="user-btn" id="pick-me" onclick="pickUser('me')">
+        <div class="u-icon">🙋‍♀️</div><div class="u-name" id="lbl-me">Би</div>
+      </button>
+      <button class="user-btn" id="pick-bf" onclick="pickUser('bf')">
+        <div class="u-icon">🙋‍♂️</div><div class="u-name" id="lbl-bf">Найз</div>
+      </button>
+    </div>
+
+    <!-- ME FORM -->
+    <div id="form-me" class="hidden">
+      <div class="sec">
+        <div class="sec-label">Ерөнхий үнэлгээ</div>
+        <div class="stars" id="stars-me">
+          <span class="star star-me" onclick="setMain('me',1)">★</span><span class="star star-me" onclick="setMain('me',2)">★</span>
+          <span class="star star-me" onclick="setMain('me',3)">★</span><span class="star star-me" onclick="setMain('me',4)">★</span>
+          <span class="star star-me" onclick="setMain('me',5)">★</span>
+        </div>
+      </div>
+      <div class="mini-grid">
+        <div class="mini-card"><div class="mini-lbl">Амт</div><div class="mini-stars" id="ms-me-taste">
+          <span class="mini-star star-me" onclick="setMini('me','taste',1)">★</span><span class="mini-star star-me" onclick="setMini('me','taste',2)">★</span><span class="mini-star star-me" onclick="setMini('me','taste',3)">★</span><span class="mini-star star-me" onclick="setMini('me','taste',4)">★</span><span class="mini-star star-me" onclick="setMini('me','taste',5)">★</span>
+        </div></div>
+        <div class="mini-card"><div class="mini-lbl">Хэмжээ</div><div class="mini-stars" id="ms-me-portion">
+          <span class="mini-star star-me" onclick="setMini('me','portion',1)">★</span><span class="mini-star star-me" onclick="setMini('me','portion',2)">★</span><span class="mini-star star-me" onclick="setMini('me','portion',3)">★</span><span class="mini-star star-me" onclick="setMini('me','portion',4)">★</span><span class="mini-star star-me" onclick="setMini('me','portion',5)">★</span>
+        </div></div>
+        <div class="mini-card"><div class="mini-lbl">Орц / Найрлага</div><div class="mini-stars" id="ms-me-ingr">
+          <span class="mini-star star-me" onclick="setMini('me','ingr',1)">★</span><span class="mini-star star-me" onclick="setMini('me','ingr',2)">★</span><span class="mini-star star-me" onclick="setMini('me','ingr',3)">★</span><span class="mini-star star-me" onclick="setMini('me','ingr',4)">★</span><span class="mini-star star-me" onclick="setMini('me','ingr',5)">★</span>
+        </div></div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Өнөөдрийн сэтгэл санаа</div>
+        <div class="csl">Байдал</div>
+        <div class="chip-group" id="cg-me-mood"></div>
+        <div class="chip-add-row hidden" id="ar-me-mood">
+          <input type="text" id="ai-me-mood" placeholder="Шинэ байдал..."/>
+          <button onclick="confirmAdd('me','mood')">Нэмэх</button>
+          <button class="cx" onclick="cancelAdd('me','mood')">Болих</button>
+        </div>
+        <div class="csl" style="margin-top:10px">Ажлын ачаалал</div>
+        <div class="work-row">
+          <span class="work-lbl">Хөнгөн</span>
+          <input type="range" min="1" max="5" value="3" id="work-me" oninput="updateWork('me')" step="1"/>
+          <span class="work-val" id="work-me-lbl">Дундаж</span>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Хоолны онцлог</div>
+        <div class="csl">Амт / Чанар</div>
+        <div class="chip-group" id="cg-me-food"></div>
+        <div class="chip-add-row hidden" id="ar-me-food">
+          <input type="text" id="ai-me-food" placeholder="Шинэ онцлог..."/>
+          <button onclick="confirmAdd('me','food')">Нэмэх</button>
+          <button class="cx" onclick="cancelAdd('me','food')">Болих</button>
+        </div>
+        <div class="csl" style="margin-top:10px">Нийт сэтгэгдэл</div>
+        <div class="chip-group" id="cg-me-overall"></div>
+        <div class="chip-add-row hidden" id="ar-me-overall">
+          <input type="text" id="ai-me-overall" placeholder="Шинэ сэтгэгдэл..."/>
+          <button onclick="confirmAdd('me','overall')">Нэмэх</button>
+          <button class="cx" onclick="cancelAdd('me','overall')">Болих</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Нэмэлт сэтгэгдэл</div>
+        <textarea id="comment-me" placeholder="Юу нь сайн, муу байсан бэ?"></textarea>
+      </div>
+      <button class="btn btn-me" id="save-me-btn" onclick="saveFeedback('me')">Хадгалах &amp; Gemini шинжилгээ</button>
+      <div id="alert-me"></div>
+      <div id="ai-me" class="hidden">
+        <div class="ai-box ai-box-me">
+          <div class="ai-hdr"><span class="dot dot-me"></span>Gemini — <span id="ai-me-name">Миний</span> дүгнэлт</div>
+          <div class="ai-txt" id="ai-me-txt"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BF FORM -->
+    <div id="form-bf" class="hidden">
+      <div class="sec">
+        <div class="sec-label">Ерөнхий үнэлгээ</div>
+        <div class="stars" id="stars-bf">
+          <span class="star star-bf" onclick="setMain('bf',1)">★</span><span class="star star-bf" onclick="setMain('bf',2)">★</span>
+          <span class="star star-bf" onclick="setMain('bf',3)">★</span><span class="star star-bf" onclick="setMain('bf',4)">★</span>
+          <span class="star star-bf" onclick="setMain('bf',5)">★</span>
+        </div>
+      </div>
+      <div class="mini-grid">
+        <div class="mini-card"><div class="mini-lbl">Амт</div><div class="mini-stars" id="ms-bf-taste">
+          <span class="mini-star star-bf" onclick="setMini('bf','taste',1)">★</span><span class="mini-star star-bf" onclick="setMini('bf','taste',2)">★</span><span class="mini-star star-bf" onclick="setMini('bf','taste',3)">★</span><span class="mini-star star-bf" onclick="setMini('bf','taste',4)">★</span><span class="mini-star star-bf" onclick="setMini('bf','taste',5)">★</span>
+        </div></div>
+        <div class="mini-card"><div class="mini-lbl">Хэмжээ</div><div class="mini-stars" id="ms-bf-portion">
+          <span class="mini-star star-bf" onclick="setMini('bf','portion',1)">★</span><span class="mini-star star-bf" onclick="setMini('bf','portion',2)">★</span><span class="mini-star star-bf" onclick="setMini('bf','portion',3)">★</span><span class="mini-star star-bf" onclick="setMini('bf','portion',4)">★</span><span class="mini-star star-bf" onclick="setMini('bf','portion',5)">★</span>
+        </div></div>
+        <div class="mini-card"><div class="mini-lbl">Орц / Найрлага</div><div class="mini-stars" id="ms-bf-ingr">
+          <span class="mini-star star-bf" onclick="setMini('bf','ingr',1)">★</span><span class="mini-star star-bf" onclick="setMini('bf','ingr',2)">★</span><span class="mini-star star-bf" onclick="setMini('bf','ingr',3)">★</span><span class="mini-star star-bf" onclick="setMini('bf','ingr',4)">★</span><span class="mini-star star-bf" onclick="setMini('bf','ingr',5)">★</span>
+        </div></div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Өнөөдрийн сэтгэл санаа</div>
+        <div class="csl">Байдал</div>
+        <div class="chip-group" id="cg-bf-mood"></div>
+        <div class="chip-add-row hidden" id="ar-bf-mood">
+          <input type="text" id="ai-bf-mood" placeholder="Шинэ байдал..."/>
+          <button onclick="confirmAdd('bf','mood')">Нэмэх</button>
+          <button class="cx" onclick="cancelAdd('bf','mood')">Болих</button>
+        </div>
+        <div class="csl" style="margin-top:10px">Ажлын ачаалал</div>
+        <div class="work-row">
+          <span class="work-lbl">Хөнгөн</span>
+          <input type="range" min="1" max="5" value="3" id="work-bf" oninput="updateWork('bf')" step="1"/>
+          <span class="work-val" id="work-bf-lbl">Дундаж</span>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Хоолны онцлог</div>
+        <div class="csl">Амт / Чанар</div>
+        <div class="chip-group" id="cg-bf-food"></div>
+        <div class="chip-add-row hidden" id="ar-bf-food">
+          <input type="text" id="ai-bf-food" placeholder="Шинэ онцлог..."/>
+          <button onclick="confirmAdd('bf','food')">Нэмэх</button>
+          <button class="cx" onclick="cancelAdd('bf','food')">Болих</button>
+        </div>
+        <div class="csl" style="margin-top:10px">Нийт сэтгэгдэл</div>
+        <div class="chip-group" id="cg-bf-overall"></div>
+        <div class="chip-add-row hidden" id="ar-bf-overall">
+          <input type="text" id="ai-bf-overall" placeholder="Шинэ сэтгэгдэл..."/>
+          <button onclick="confirmAdd('bf','overall')">Нэмэх</button>
+          <button class="cx" onclick="cancelAdd('bf','overall')">Болих</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Нэмэлт сэтгэгдэл</div>
+        <textarea id="comment-bf" placeholder="Юу нь сайн, муу байсан бэ?"></textarea>
+      </div>
+      <button class="btn btn-bf" id="save-bf-btn" onclick="saveFeedback('bf')">Хадгалах &amp; Gemini шинжилгээ</button>
+      <div id="alert-bf"></div>
+      <div id="ai-bf" class="hidden">
+        <div class="ai-box ai-box-bf">
+          <div class="ai-hdr"><span class="dot dot-bf"></span>Gemini — <span id="ai-bf-name">Найзын</span> дүгнэлт</div>
+          <div class="ai-txt" id="ai-bf-txt"></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-add -->
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" class="hidden">
+    <div id="hist-empty" style="color:var(--text2);font-size:14px;padding:2rem 0;text-align:center">Хоолны дэвтэр хоосон байна.</div>
+    <div id="hist-stats" class="hidden">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val" id="s-count">0</div><div class="stat-lbl">Нийт хоол</div></div>
+        <div class="stat-card"><div class="stat-val" id="s-avg-me" style="color:var(--green)">—</div><div class="stat-lbl" id="s-lbl-me">Дундаж</div></div>
+        <div class="stat-card"><div class="stat-val" id="s-avg-bf" style="color:var(--purple)">—</div><div class="stat-lbl" id="s-lbl-bf">Дундаж</div></div>
+      </div>
+    </div>
+    <div id="hist-list"></div>
+  </div>
+
+  <!-- DECIDE TAB -->
+  <div id="tab-decide" class="hidden">
+    <div style="color:var(--text2);font-size:13px;margin-bottom:16px">Хоёулангийн сэтгэл санаа болон өмнөх үнэлгээнд үндэслэн Gemini дараагийн хоолыг санал болгоно.</div>
+    <div class="sec">
+      <div class="sec-label">Нэмэлт хүсэлт (заавал биш)</div>
+      <textarea id="decide-wish" placeholder="Жишээ: Өнөөдөр хөнгөн идмээр байна..." style="min-height:60px"></textarea>
+    </div>
+    <button class="btn-out" id="decide-btn" onclick="getDecision()">Gemini-ийн зөвлөгөө авах ↗</button>
+    <div id="decide-result" class="hidden">
+      <div class="ai-box ai-box-n" style="margin-top:16px">
+        <div class="ai-hdr"><span class="dot dot-g"></span>Gemini — Хоёулангийн зөвлөгөө</div>
+        <div class="ai-txt" id="decide-txt"></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /app -->
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "__FB_API_KEY__",
+  authDomain: "__FB_PROJECT_ID__.firebaseapp.com",
+  databaseURL: "__FB_DATABASE_URL__",
+  projectId: "__FB_PROJECT_ID__",
+  storageBucket: "__FB_PROJECT_ID__.firebasestorage.app",
+  messagingSenderId: "__FB_MESSAGING_ID__",
+  appId: "__FB_APP_ID__"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+const GEMINI_KEY = '__GEMINI_KEY__';
+const GEMINI_API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+const WORK_LABELS = ['','Хөнгөн','Дундаж доогуур','Дундаж','Их','Маш их'];
+const DEFAULT_CHIPS = {
+  mood:    ['Эрч хүчтэй','Хэвийн','Ядарсан','Нойрмог','Стресстэй','Тогтворгүй','Гунигтай'],
+  food:    ['Хэт давсалсан','Хэт тослог','Хүчтэй амттай','Амтгүй','Хэт солонгорсон','Хэт халуун','Хүйтэн ирсэн','Шинэхэн','Гэрийн амт','Хуурай','Шүүслэг','Хялбар идэхэд','Хэт хүнд','Эрүүл мэт'],
+  overall: ['Гайхалтай','Дахин идмээр','Дундаж','Дахиж идэхгүй','Гэнэтийн сайхан']
+};
+
+// State
+let names = { me:'Bujee', bf:'Tuuguu' };
+let meals = [];
+let chipLists = {
+  me:{ mood:[...DEFAULT_CHIPS.mood], food:[...DEFAULT_CHIPS.food], overall:[...DEFAULT_CHIPS.overall] },
+  bf:{ mood:[...DEFAULT_CHIPS.mood], food:[...DEFAULT_CHIPS.food], overall:[...DEFAULT_CHIPS.overall] }
+};
+const ratings = { me:{overall:0,taste:0,portion:0,ingr:0}, bf:{overall:0,taste:0,portion:0,ingr:0} };
+const selected = { me:{mood:new Set(),food:new Set(),overall:new Set()}, bf:{mood:new Set(),food:new Set(),overall:new Set()} };
+const workLoad = { me:3, bf:3 };
+
+// Firebase helpers
+function fbSet(path, val) { return set(ref(db, path), val); }
+
+// ── Boot ──────────────────────────────────────────────────────
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+  ]);
+}
+
+async function boot() {
+  function readOnce(path) {
+    return new Promise((resolve, reject) => {
+      const unsub = onValue(ref(db, path), snap => { unsub(); resolve(snap); }, err => { unsub(); reject(err); });
+    });
+  }
+
+  function showError(msg) {
+    const d = document.createElement('div');
+    d.style.cssText = 'background:#FCEBEB;color:#501313;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px';
+    d.textContent = msg;
+    document.getElementById('tab-add').prepend(d);
+  }
+
+  try {
+    const [namesSnap, mealsSnap, chipsSnap] = await withTimeout(
+      Promise.all([readOnce('names'), readOnce('meals'), readOnce('chipLists')]),
+      8000
+    );
+    if (namesSnap.exists()) names = namesSnap.val();
+    if (mealsSnap.exists()) { const d=mealsSnap.val(); meals=Object.values(d).sort((a,b)=>b.id-a.id); }
+    if (chipsSnap.exists()) chipLists = chipsSnap.val();
+    applyNames();
+    ['me','bf'].forEach(u=>['mood','food','overall'].forEach(g=>renderChips(u,g)));
+    updateWork('me'); updateWork('bf');
+    // Live listener
+    onValue(ref(db,'meals'), snap => {
+      if (snap.exists()) { meals = Object.values(snap.val()).sort((a,b)=>b.id-a.id); }
+      else meals = [];
+      if (!document.getElementById('tab-history').classList.contains('hidden')) renderHistory();
+    });
+    setSync(true);
+  } catch(e) {
+    console.error('Firebase boot error:', e.message);
+    applyNames();
+    ['me','bf'].forEach(u=>['mood','food','overall'].forEach(g=>renderChips(u,g)));
+    updateWork('me'); updateWork('bf');
+    setSync(false);
+    if (e.message === 'timeout') {
+      showError('⚠️ Firebase холбогдсонгүй (timeout). Firebase Console → Realtime Database → Rules tab → ".read":true, ".write":true болгоод Publish дарна уу.');
+    } else {
+      showError('⚠️ Firebase алдаа: ' + e.message + ' — Rules шалгана уу.');
+    }
+  }
+
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+}
+
+function setSync(on) {
+  document.getElementById('sdot').className = 'sdot' + (on?' on':'');
+  document.getElementById('slbl').textContent = on ? 'Live' : 'Офлайн';
+}
+
+// ── Names ───────────────────────────────────────────────────────
+function applyNames() {
+  document.getElementById('lbl-me').textContent = names.me;
+  document.getElementById('lbl-bf').textContent = names.bf;
+  document.getElementById('ai-me-name').textContent = names.me+'-ийн';
+  document.getElementById('ai-bf-name').textContent = names.bf+'-ийн';
+  document.getElementById('s-lbl-me').textContent = names.me+' дундаж';
+  document.getElementById('s-lbl-bf').textContent = names.bf+' дундаж';
+}
+
+// ── Chips ───────────────────────────────────────────────────────
+function renderChips(u, g) {
+  const container = document.getElementById(`cg-${u}-${g}`);
+  container.innerHTML='';
+  const sel = selected[u][g];
+  (chipLists[u][g]||[]).forEach(label => {
+    const chip = document.createElement('button');
+    chip.className = 'chip'+(sel.has(label)?` sel-${u}`:'');
+    chip.innerHTML = label+`<span class="dx" title="Устгах">×</span>`;
+    chip.querySelector('.dx').onclick = e => { e.stopPropagation(); removeChip(u,g,label); };
+    chip.onclick = () => toggleChip(u,g,chip,label);
+    container.appendChild(chip);
+  });
+  const addBtn=document.createElement('button');
+  addBtn.className='add-chip-btn'; addBtn.textContent='+ Нэмэх';
+  addBtn.onclick=()=>{ document.getElementById(`ar-${u}-${g}`).classList.remove('hidden'); document.getElementById(`ai-${u}-${g}`).focus(); };
+  container.appendChild(addBtn);
+}
+function toggleChip(u,g,chip,label) {
+  const sel=selected[u][g];
+  if (sel.has(label)){sel.delete(label);chip.classList.remove(`sel-${u}`);}
+  else{sel.add(label);chip.classList.add(`sel-${u}`);}
+}
+async function removeChip(u,g,label) {
+  chipLists[u][g]=chipLists[u][g].filter(l=>l!==label);
+  selected[u][g].delete(label);
+  await fbSet('chipLists', chipLists);
+  renderChips(u,g);
+}
+window.confirmAdd = async function(u,g) {
+  const inp=document.getElementById(`ai-${u}-${g}`);
+  const val=inp.value.trim(); if(!val)return;
+  if (!chipLists[u][g].includes(val)) chipLists[u][g].push(val);
+  await fbSet('chipLists', chipLists);
+  window.cancelAdd(u,g); renderChips(u,g);
+};
+window.cancelAdd = function(u,g) {
+  document.getElementById(`ar-${u}-${g}`).classList.add('hidden');
+  document.getElementById(`ai-${u}-${g}`).value='';
+};
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && e.target.id && e.target.id.startsWith('ai-')) {
+    const parts=e.target.id.split('-');
+    if(parts.length===3) window.confirmAdd(parts[1],parts[2]);
+  }
+});
+
+// ── UI helpers ──────────────────────────────────────────────────
+window.showTab = function(t) {
+  ['add','history','decide'].forEach(id=>document.getElementById('tab-'+id).classList.toggle('hidden',id!==t));
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['add','history','decide'][i]===t));
+  if(t==='history') renderHistory();
+};
+window.pickUser = function(u) {
+  document.getElementById('pick-me').className='user-btn'+(u==='me'?' sel-me':'');
+  document.getElementById('pick-bf').className='user-btn'+(u==='bf'?' sel-bf':'');
+  document.getElementById('form-me').classList.toggle('hidden',u!=='me');
+  document.getElementById('form-bf').classList.toggle('hidden',u!=='bf');
+};
+window.setMain = function(u,v) {
+  ratings[u].overall=v;
+  document.querySelectorAll(`#stars-${u} .star`).forEach((s,i)=>s.classList.toggle('lit',i<v));
+};
+window.setMini = function(u,type,v) {
+  ratings[u][type]=v;
+  document.querySelectorAll(`#ms-${u}-${type} .mini-star`).forEach((s,i)=>s.classList.toggle('lit',i<v));
+};
+window.updateWork = function(u) {
+  const v=parseInt(document.getElementById('work-'+u).value);
+  workLoad[u]=v;
+  document.getElementById('work-'+u+'-lbl').textContent=WORK_LABELS[v];
+};
+function showAlert(id,msg,type) {
+  const el=document.getElementById(id);
+  el.innerHTML=`<div class="alert ${type==='ok'?'ok':'err-a'}">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='',3500);
+}
+function today(){ return new Date().toLocaleDateString('mn-MN'); }
+
+// ── Gemini ──────────────────────────────────────────────────────
+async function callGemini(prompt) {
+  const res=await fetch(GEMINI_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API алдаа');}
+  const d=await res.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||'Хариу авсангүй.';
+}
+
+// ── Save feedback ───────────────────────────────────────────────
+window.saveFeedback = async function(u) {
+  const mealName=document.getElementById('meal-name').value.trim();
+  if(!mealName){showAlert('alert-'+u,'Хоолны нэр оруулна уу','err');return;}
+  if(ratings[u].overall===0){showAlert('alert-'+u,'Ерөнхий үнэлгээ өгнө үү','err');return;}
+  const uname=u==='me'?names.me:names.bf;
+  const comment=document.getElementById('comment-'+u).value.trim();
+  const r=ratings[u];
+  const moodChips=[...selected[u].mood];
+  const foodChips=[...selected[u].food];
+  const overallChips=[...selected[u].overall];
+  const wl=workLoad[u];
+
+  // Find or create meal entry
+  let entry=meals.find(m=>m.name===mealName&&m.date===today());
+  if(!entry){ entry={id:Date.now(),name:mealName,date:today(),me:null,bf:null}; meals.unshift(entry); }
+  entry[u]={overall:r.overall,taste:r.taste,portion:r.portion,ingr:r.ingr,moodChips,foodChips,overallChips,workLoad:wl,comment};
+
+  // Save to Firebase
+  const mealsObj={};
+  meals.forEach(m=>{ mealsObj[m.id]=m; });
+  await fbSet('meals', mealsObj);
+
+  const btn=document.getElementById('save-'+u+'-btn');
+  btn.disabled=true; btn.innerHTML=`<span class="spinner"></span>Gemini шинжилж байна...`;
+  document.getElementById('ai-'+u).classList.add('hidden');
+
+  try {
+    const prompt=`Та бол хосын хоолны дулаахан зөвлөх юм. ${uname} үдийн хоолны үнэлгээ өглөө.
+Хоол: ${mealName}
+Оноо: ерөнхий ${r.overall}/5, амт ${r.taste||'—'}/5, хэмжээ ${r.portion||'—'}/5, орц ${r.ingr||'—'}/5
+Сэтгэл санаа: ${moodChips.join(', ')||'заагаагүй'} | Ачаалал: ${WORK_LABELS[wl]}
+Хоолны онцлог: ${foodChips.join(', ')||'заагаагүй'}
+Нийт сэтгэгдэл: ${overallChips.join(', ')||'заагаагүй'}
+Нэмэлт: ${comment||'байхгүй'}
+3-4 өгүүлбэрт монгол хэлээр: хоолны дүгнэлт, сэтгэл санаатай нь холбоотой зөвлөгөө, дараагийн удаад тохирох хоолны санал. ${uname}-д хандаж дулаахан бич.`;
+    const txt=await callGemini(prompt);
+    document.getElementById('ai-'+u+'-txt').textContent=txt;
+    document.getElementById('ai-'+u).classList.remove('hidden');
+  } catch(e) {
+    document.getElementById('ai-'+u+'-txt').textContent='Алдаа: '+e.message;
+    document.getElementById('ai-'+u).classList.remove('hidden');
+  }
+
+  btn.disabled=false; btn.textContent='Хадгалах & Gemini шинжилгээ';
+  showAlert('alert-'+u,'Хадгалагдлаа ✓ Firebase-д sync боллоо','ok');
+
+  // Reset
+  ratings[u]={overall:0,taste:0,portion:0,ingr:0};
+  selected[u].mood.clear(); selected[u].food.clear(); selected[u].overall.clear();
+  document.querySelectorAll(`#stars-${u} .star,#ms-${u}-taste .mini-star,#ms-${u}-portion .mini-star,#ms-${u}-ingr .mini-star`).forEach(s=>s.classList.remove('lit'));
+  ['mood','food','overall'].forEach(g=>renderChips(u,g));
+  document.getElementById('comment-'+u).value='';
+  document.getElementById('work-'+u).value=3; window.updateWork(u);
+};
+
+// ── History ─────────────────────────────────────────────────────
+function renderHistory() {
+  const list=document.getElementById('hist-list');
+  const empty=document.getElementById('hist-empty');
+  const stats=document.getElementById('hist-stats');
+  if(!meals.length){ empty.classList.remove('hidden');list.innerHTML='';stats.classList.add('hidden');return; }
+  empty.classList.add('hidden'); stats.classList.remove('hidden');
+  document.getElementById('s-count').textContent=meals.length;
+  const ms=meals.filter(m=>m.me).map(m=>m.me.overall);
+  const bs=meals.filter(m=>m.bf).map(m=>m.bf.overall);
+  document.getElementById('s-avg-me').textContent=ms.length?(ms.reduce((a,b)=>a+b,0)/ms.length).toFixed(1):'—';
+  document.getElementById('s-avg-bf').textContent=bs.length?(bs.reduce((a,b)=>a+b,0)/bs.length).toFixed(1):'—';
+  const col=(fd,cls,hcls)=>fd
+    ?`<div class="h-score-${cls}">${'★'.repeat(fd.overall)}${'☆'.repeat(5-fd.overall)}</div>
+      <div class="h-sub">${fd.taste?'Амт:'+fd.taste+'/5 ':''}${fd.portion?'Хэмжээ:'+fd.portion+'/5 ':''}${fd.ingr?'Орц:'+fd.ingr+'/5':''}</div>
+      ${[...fd.moodChips,...fd.foodChips,...fd.overallChips].length?`<div class="h-chips">${[...fd.moodChips,...fd.foodChips,...fd.overallChips].map(c=>`<span class="${hcls}">${c}</span>`).join('')}</div>`:''}
+      ${fd.comment?`<div class="h-comment">"${fd.comment}"</div>`:''}`
+    :`<div style="color:var(--text3);font-size:12px;margin-top:4px">Үнэлгээ өгөөгүй</div>`;
+  list.innerHTML=meals.map(m=>`<div class="h-item">
+    <div class="h-meal">${m.name}</div><div class="h-date">${m.date}</div>
+    <div class="h-pair">
+      <div class="h-col"><div class="h-col-hdr h-col-hdr-me">${names.me}</div>${col(m.me,'me','hc-me')}</div>
+      <div class="h-col"><div class="h-col-hdr h-col-hdr-bf">${names.bf}</div>${col(m.bf,'bf','hc-bf')}</div>
+    </div></div>`).join('');
+}
+
+// ── Decide ──────────────────────────────────────────────────────
+window.getDecision = async function() {
+  if(!meals.length){alert('Эхлээд хоол нэмнэ үү');return;}
+  const btn=document.getElementById('decide-btn');
+  btn.disabled=true; btn.textContent='Gemini бодож байна...';
+  document.getElementById('decide-result').classList.add('hidden');
+  const wish=document.getElementById('decide-wish').value.trim();
+  const lines=meals.slice(0,15).map(m=>{
+    const me=m.me,bf=m.bf;
+    return `- ${m.name}: ${names.me} ${me?me.overall+'/5 ('+[...me.foodChips].slice(0,2).join(',')+')'  :'үнэлээгүй'}, ${names.bf} ${bf?bf.overall+'/5 ('+[...bf.foodChips].slice(0,2).join(',')+')'  :'үнэлээгүй'}`;
+  }).join('\n');
+  const prompt=`Та бол хосын хоолны дулаахан зөвлөх юм. ${names.me} ба ${names.bf} хоёрын өмнөх үнэлгээнд үндэслэн дараагийн үдийн хоолыг санал болго.
+Өмнөх үнэлгээ:\n${lines}\n${wish?'Хүсэлт: '+wish:''}
+Монгол хэлээр: 1.Нийтлэг амт сонголт 2.Шилдэг хоол 3.Дараагийн 2-3 санал 4.Нэг гол зөвлөмж. Дулаахан өнгө аясаар.`;
+  try {
+    const txt=await callGemini(prompt);
+    document.getElementById('decide-txt').textContent=txt;
+    document.getElementById('decide-result').classList.remove('hidden');
+  } catch(e) { alert('Алдаа: '+e.message); }
+  btn.disabled=false; btn.textContent='Gemini-ийн зөвлөгөө авах ↗';
+};
+
+boot();
+</script>
+</body>
+</html>
