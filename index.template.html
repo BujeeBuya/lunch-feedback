@@ -355,7 +355,6 @@ const fbApp = initializeApp(firebaseConfig);
 const db = getDatabase(fbApp);
 
 const GEMINI_KEY = '__GEMINI_KEY__';
-const GEMINI_API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`;
 const WORK_LABELS = ['','Хөнгөн','Дундаж доогуур','Дундаж','Их','Маш их'];
 const DEFAULT_CHIPS = {
   mood:    ['Эрч хүчтэй','Хэвийн','Ядарсан','Нойрмог','Стресстэй','Тогтворгүй','Гунигтай'],
@@ -529,10 +528,14 @@ function today(){ return new Date().toLocaleDateString('mn-MN'); }
 
 // ── Gemini ──────────────────────────────────────────────────────
 async function callGemini(prompt) {
-  const res=await fetch(GEMINI_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
-  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API алдаа');}
-  const d=await res.json();
-  return d.candidates?.[0]?.content?.parts?.[0]?.text||'Хариу авсангүй.';
+  const res = await fetch('/.netlify/functions/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Gemini алдаа');
+  return data.text;
 }
 
 // ── Save feedback ───────────────────────────────────────────────
