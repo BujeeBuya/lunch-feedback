@@ -203,7 +203,6 @@
         <div class="work-row">
           <span class="work-lbl">Бага</span>
           <input type="range" min="1" max="5" value="3" id="work-me" oninput="updateWork('me')" step="1"/>
-          <span class="work-val" id="work-me-lbl">Дундаж</span>
           <span class="work-lbl">Их</span>
         </div>
       </div>
@@ -272,7 +271,6 @@
         <div class="work-row">
           <span class="work-lbl">Бага</span>
           <input type="range" min="1" max="5" value="3" id="work-bf" oninput="updateWork('bf')" step="1"/>
-          <span class="work-val" id="work-bf-lbl">Дундаж</span>
           <span class="work-lbl">Их</span>
         </div>
       </div>
@@ -521,7 +519,6 @@ window.setMini = function(u,type,v) {
 window.updateWork = function(u) {
   const v=parseInt(document.getElementById('work-'+u).value);
   workLoad[u]=v;
-  document.getElementById('work-'+u+'-lbl').textContent=WORK_LABELS[v];
 };
 function showAlert(id,msg,type) {
   const el=document.getElementById(id);
