@@ -596,32 +596,74 @@ window.saveFeedback = async function(u) {
 
 // ── History ─────────────────────────────────────────────────────
 function renderHistory() {
-  const list=document.getElementById('hist-list');
-  const empty=document.getElementById('hist-empty');
-  const stats=document.getElementById('hist-stats');
-  if(!meals.length){ empty.classList.remove('hidden');list.innerHTML='';stats.classList.add('hidden');return; }
-  empty.classList.add('hidden'); stats.classList.remove('hidden');
-  document.getElementById('s-count').textContent=meals.length;
-  const ms=meals.filter(m=>m.me).map(m=>m.me.overall);
-  const bs=meals.filter(m=>m.bf).map(m=>m.bf.overall);
-  document.getElementById('s-avg-me').textContent=ms.length?(ms.reduce((a,b)=>a+b,0)/ms.length).toFixed(1):'—';
-  document.getElementById('s-avg-bf').textContent=bs.length?(bs.reduce((a,b)=>a+b,0)/bs.length).toFixed(1):'—';
-  const WLBL = ['','Хөнгөн','Дундаж доогуур','Дундаж','Их','Маш их'];
-  const col=(fd,cls,hcls)=>fd
-    ?`<div class="h-score-${cls}">${'★'.repeat(fd.overall)}${'☆'.repeat(5-fd.overall)}</div>
-      <div class="h-sub">
-        ${fd.taste?`<span>Амт: ${fd.taste}/5</span> `:''}${fd.portion?`<span>Хэмжээ: ${fd.portion}/5</span> `:''}${fd.ingr?`<span>Орц: ${fd.ingr}/5</span>`:''}
+  const list  = document.getElementById('hist-list');
+  const empty = document.getElementById('hist-empty');
+  const stats = document.getElementById('hist-stats');
+
+  if (!meals.length) {
+    empty.classList.remove('hidden');
+    list.innerHTML = '';
+    stats.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  stats.classList.remove('hidden');
+
+  document.getElementById('s-count').textContent = meals.length;
+  const ms = meals.filter(m => m.me).map(m => m.me.overall);
+  const bs = meals.filter(m => m.bf).map(m => m.bf.overall);
+  document.getElementById('s-avg-me').textContent = ms.length ? (ms.reduce((a,b)=>a+b,0)/ms.length).toFixed(1) : '—';
+  document.getElementById('s-avg-bf').textContent = bs.length ? (bs.reduce((a,b)=>a+b,0)/bs.length).toFixed(1) : '—';
+
+  const WLBL = ['','Бага','','Дундаж','','Их'];
+
+  function renderCol(fd, cls, hcls) {
+    if (!fd) return `<div style="color:var(--text3);font-size:12px;margin-top:4px">Үнэлгээ өгөөгүй</div>`;
+
+    const stars = `<div class="h-score-${cls}">${'★'.repeat(fd.overall)}${'☆'.repeat(5-fd.overall)}</div>`;
+
+    const subRatings = [
+      fd.taste   ? `Амт: ${fd.taste}/5`    : '',
+      fd.portion ? `Хэмжээ: ${fd.portion}/5` : '',
+      fd.ingr    ? `Орц: ${fd.ingr}/5`     : '',
+    ].filter(Boolean).join(' · ');
+
+    const workRow = fd.workLoad
+      ? `<div style="font-size:11px;color:var(--text2);margin-top:3px">Ачаалал: ${WLBL[fd.workLoad] || fd.workLoad}</div>`
+      : '';
+
+    const allChips = [...(fd.moodChips||[]), ...(fd.foodChips||[]), ...(fd.overallChips||[])];
+    const chipRow = allChips.length
+      ? `<div class="h-chips">${allChips.map(c=>`<span class="${hcls}">${c}</span>`).join('')}</div>`
+      : '';
+
+    const commentRow = fd.comment
+      ? `<div class="h-comment">"${fd.comment}"</div>`
+      : '';
+
+    return stars
+      + (subRatings ? `<div class="h-sub" style="margin-top:4px">${subRatings}</div>` : '')
+      + workRow
+      + chipRow
+      + commentRow;
+  }
+
+  list.innerHTML = meals.map(m => `
+    <div class="h-item">
+      <div class="h-meal">${m.name}</div>
+      <div class="h-date">${m.date}</div>
+      <div class="h-pair">
+        <div class="h-col">
+          <div class="h-col-hdr h-col-hdr-me">${names.me}</div>
+          ${renderCol(m.me, 'me', 'hc-me')}
+        </div>
+        <div class="h-col">
+          <div class="h-col-hdr h-col-hdr-bf">${names.bf}</div>
+          ${renderCol(m.bf, 'bf', 'hc-bf')}
+        </div>
       </div>
-      ${fd.workLoad?`<div class="h-sub" style="margin-top:2px">Ачаалал: ${WLBL[fd.workLoad]||fd.workLoad}</div>`:''}
-      ${[...fd.moodChips,...fd.foodChips,...fd.overallChips].length?`<div class="h-chips">${[...fd.moodChips,...fd.foodChips,...fd.overallChips].map(c=>`<span class="${hcls}">${c}</span>`).join('')}</div>`:''}
-      ${fd.comment?`<div class="h-comment">"${fd.comment}"</div>`:''}`
-    :`<div style="color:var(--text3);font-size:12px;margin-top:4px">Үнэлгээ өгөөгүй</div>`;
-  list.innerHTML=meals.map(m=>`<div class="h-item">
-    <div class="h-meal">${m.name}</div><div class="h-date">${m.date}</div>
-    <div class="h-pair">
-      <div class="h-col"><div class="h-col-hdr h-col-hdr-me">${names.me}</div>${col(m.me,'me','hc-me')}</div>
-      <div class="h-col"><div class="h-col-hdr h-col-hdr-bf">${names.bf}</div>${col(m.bf,'bf','hc-bf')}</div>
-    </div></div>`).join('');
+    </div>`).join('');
 }
 
 // ── Decide ──────────────────────────────────────────────────────
