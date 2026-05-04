@@ -606,9 +606,13 @@ function renderHistory() {
   const bs=meals.filter(m=>m.bf).map(m=>m.bf.overall);
   document.getElementById('s-avg-me').textContent=ms.length?(ms.reduce((a,b)=>a+b,0)/ms.length).toFixed(1):'—';
   document.getElementById('s-avg-bf').textContent=bs.length?(bs.reduce((a,b)=>a+b,0)/bs.length).toFixed(1):'—';
+  const WLBL = ['','Хөнгөн','Дундаж доогуур','Дундаж','Их','Маш их'];
   const col=(fd,cls,hcls)=>fd
     ?`<div class="h-score-${cls}">${'★'.repeat(fd.overall)}${'☆'.repeat(5-fd.overall)}</div>
-      <div class="h-sub">${fd.taste?'Амт:'+fd.taste+'/5 ':''}${fd.portion?'Хэмжээ:'+fd.portion+'/5 ':''}${fd.ingr?'Орц:'+fd.ingr+'/5':''}</div>
+      <div class="h-sub">
+        ${fd.taste?`<span>Амт: ${fd.taste}/5</span> `:''}${fd.portion?`<span>Хэмжээ: ${fd.portion}/5</span> `:''}${fd.ingr?`<span>Орц: ${fd.ingr}/5</span>`:''}
+      </div>
+      ${fd.workLoad?`<div class="h-sub" style="margin-top:2px">Ачаалал: ${WLBL[fd.workLoad]||fd.workLoad}</div>`:''}
       ${[...fd.moodChips,...fd.foodChips,...fd.overallChips].length?`<div class="h-chips">${[...fd.moodChips,...fd.foodChips,...fd.overallChips].map(c=>`<span class="${hcls}">${c}</span>`).join('')}</div>`:''}
       ${fd.comment?`<div class="h-comment">"${fd.comment}"</div>`:''}`
     :`<div style="color:var(--text3);font-size:12px;margin-top:4px">Үнэлгээ өгөөгүй</div>`;
