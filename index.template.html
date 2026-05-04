@@ -119,6 +119,24 @@
     .h-chips{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
     .hc-me{font-size:10px;padding:1px 7px;background:var(--green-bg);color:var(--green-text);border-radius:100px}
     .hc-bf{font-size:10px;padding:1px 7px;background:var(--purple-bg);color:var(--purple-text);border-radius:100px}
+    .h-actions{display:flex;gap:6px;margin-top:8px}
+    .h-edit-btn{padding:3px 10px;font-size:11px;border-radius:100px;border:.5px solid var(--border2);background:transparent;cursor:pointer;font-family:inherit;color:var(--text2);transition:all .15s}
+    .h-edit-btn:hover{background:var(--bg2)}
+    .h-edit-btn.me{border-color:var(--green);color:var(--green)}
+    .h-edit-btn.bf{border-color:var(--purple);color:var(--purple)}
+    /* modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+    .modal{background:var(--bg);border-radius:var(--r-lg);padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+    .modal-title{font-size:16px;font-weight:500;margin-bottom:16px}
+    .modal-footer{display:flex;gap:8px;margin-top:16px}
+    .modal-footer button{flex:1;padding:10px;border-radius:var(--r-md);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;border:none}
+    .modal-save-me{background:var(--green);color:#fff}
+    .modal-save-bf{background:var(--purple);color:#fff}
+    .modal-cancel{background:var(--bg2);color:var(--text2)}
+    .modal label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;margin-top:12px}
+    .modal .mini-stars-edit{display:flex;gap:4px;margin-bottom:4px}
+    .modal .mini-stars-edit .es{font-size:22px;cursor:pointer;opacity:.2;color:var(--amber)}
+    .modal .mini-stars-edit .es.lit{opacity:1}
     /* misc */
     .name-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
     .name-badge{font-size:11px;font-weight:500;margin-bottom:4px}
@@ -663,8 +681,128 @@ function renderHistory() {
           ${renderCol(m.bf, 'bf', 'hc-bf')}
         </div>
       </div>
+      <div class="h-actions">
+        <button class="h-edit-btn me" onclick="openEditModal('${m.id}','me')">✏️ ${names.me} засах</button>
+        <button class="h-edit-btn bf" onclick="openEditModal('${m.id}','bf')">✏️ ${names.bf} засах</button>
+      </div>
     </div>`).join('');
 }
+
+// ── Edit Modal ───────────────────────────────────────────────────
+let editState = { mealId: null, u: null, ratings: {}, chips: { mood:new Set(), food:new Set(), overall:new Set() }, workLoad: 3 };
+
+window.openEditModal = function(mealId, u) {
+  const meal = meals.find(m => String(m.id) === String(mealId));
+  if (!meal) return;
+  const fd = meal[u] || {};
+  editState = {
+    mealId,
+    u,
+    ratings: { overall: fd.overall||0, taste: fd.taste||0, portion: fd.portion||0, ingr: fd.ingr||0 },
+    chips: {
+      mood:    new Set(fd.moodChips||[]),
+      food:    new Set(fd.foodChips||[]),
+      overall: new Set(fd.overallChips||[])
+    },
+    workLoad: fd.workLoad || 3
+  };
+
+  const uname = u === 'me' ? names.me : names.bf;
+  const col = u === 'me' ? 'var(--green)' : 'var(--purple)';
+  const WLBL = ['','Бага','','Дундаж','','Их'];
+
+  function starRow(key, label) {
+    const v = editState.ratings[key] || 0;
+    const dots = [1,2,3,4,5].map(i =>
+      `<span class="es${i<=v?' lit':''}" onclick="setEditStar('${key}',${i})">★</span>`
+    ).join('');
+    return `<label>${label}</label><div class="mini-stars-edit">${dots}</div>`;
+  }
+
+  function chipRowEdit(group, items, label) {
+    const sel = editState.chips[group];
+    const btns = (chipLists[u][group]||[]).map(c => {
+      const on = sel.has(c);
+      return `<button class="chip${on?' sel-'+u:''}" style="font-size:11px;padding:3px 9px" onclick="toggleEditChip('${group}','${c}',this)">${c}</button>`;
+    }).join('');
+    return `<label>${label}</label><div class="chip-group" style="margin-bottom:4px">${btns}</div>`;
+  }
+
+  const html = `
+    <div class="modal-overlay" id="edit-modal" onclick="closeEditModal(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-title" style="color:${col}">✏️ ${meal.name} — ${uname} засах</div>
+        ${starRow('overall','Ерөнхий үнэлгээ')}
+        ${starRow('taste','Амт')}
+        ${starRow('portion','Хэмжээ')}
+        ${starRow('ingr','Орц / Найрлага')}
+        <label>Ажлын ачаалал</label>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:var(--r-md);padding:8px 12px">
+          <span style="font-size:12px;color:var(--text2)">Бага</span>
+          <input type="range" min="1" max="5" value="${editState.workLoad}" id="edit-work" oninput="editState.workLoad=parseInt(this.value)" style="flex:1"/>
+          <span style="font-size:12px;color:var(--text2)">Их</span>
+        </div>
+        ${chipRowEdit('mood',[],'Сэтгэл санаа')}
+        ${chipRowEdit('food',[],'Хоолны онцлог')}
+        ${chipRowEdit('overall',[],'Нийт сэтгэгдэл')}
+        <label>Нэмэлт сэтгэгдэл</label>
+        <textarea id="edit-comment" style="margin-top:0" placeholder="Сэтгэгдэл...">${fd.comment||''}</textarea>
+        <div class="modal-footer">
+          <button class="modal-cancel" onclick="document.getElementById('edit-modal').remove()">Болих</button>
+          <button class="modal-save-${u}" onclick="saveEdit()">Хадгалах</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.closeEditModal = function(e) {
+  if (e.target.id === 'edit-modal') document.getElementById('edit-modal').remove();
+};
+
+window.setEditStar = function(key, v) {
+  editState.ratings[key] = v;
+  document.querySelectorAll(`#edit-modal .mini-stars-edit`).forEach((row, i) => {
+    const keys = ['overall','taste','portion','ingr'];
+    if (keys[i] === key) {
+      row.querySelectorAll('.es').forEach((s, si) => s.classList.toggle('lit', si < v));
+    }
+  });
+};
+
+window.toggleEditChip = function(group, label, el) {
+  const sel = editState.chips[group];
+  if (sel.has(label)) { sel.delete(label); el.classList.remove('sel-me','sel-bf'); }
+  else { sel.add(label); el.classList.add('sel-' + editState.u); }
+};
+
+window.saveEdit = async function() {
+  const meal = meals.find(m => String(m.id) === String(editState.mealId));
+  if (!meal) return;
+  const u = editState.u;
+  const comment = document.getElementById('edit-comment').value.trim();
+
+  meal[u] = {
+    ...meal[u],
+    overall:  editState.ratings.overall,
+    taste:    editState.ratings.taste,
+    portion:  editState.ratings.portion,
+    ingr:     editState.ratings.ingr,
+    workLoad: editState.workLoad,
+    moodChips:    [...editState.chips.mood],
+    foodChips:    [...editState.chips.food],
+    overallChips: [...editState.chips.overall],
+    comment
+  };
+
+  const mealsObj = {};
+  meals.forEach(m => { mealsObj[m.id] = m; });
+  await fbSet('meals', mealsObj);
+
+  document.getElementById('edit-modal').remove();
+  renderHistory();
+};
 
 // ── Decide ──────────────────────────────────────────────────────
 window.getDecision = async function() {
